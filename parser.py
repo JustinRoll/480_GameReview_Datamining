@@ -97,6 +97,7 @@ def parseDir(path):
         if "DS_Store" not in folder:
             reviews[folder] = parseFiles(path + folder + "/")
     return reviews
+
 reviews = parseDir("/Users/jroll/dev/480/480_GameReview_Datamining/data/Gamespot-Cleaned/")
 pickle.dump(reviews, open( "data/gameReviewDict.p", "wb" ))
 #print(savedDict)
