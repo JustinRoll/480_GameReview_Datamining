@@ -1,5 +1,6 @@
 import re
 import os
+import pickle
 
 class Parser:
 
@@ -97,5 +98,7 @@ def parseDir(path):
             reviews[folder] = parseFiles(path + folder + "/")
     return reviews
 reviews = parseDir("/Users/jroll/dev/480/480_GameReview_Datamining/data/Gamespot-Cleaned/")
+pickle.dump(reviews, open( "gameReviewDict.p", "wb" ))
+#print(savedDict)
 #print(reviews)
 #validation here
