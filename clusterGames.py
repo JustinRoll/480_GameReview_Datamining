@@ -8,6 +8,8 @@ from nltk.stem.porter import PorterStemmer
 from scipy.spatial import distance
 import collections
 import pickle
+from pprint import pprint
+
 reviews = pickle.load(open("data/gameReviewDict.p", "rb"))
 
 token_dict = {}
@@ -27,34 +29,43 @@ def process_text(text, stem=True):
  
 def cluster_text(reviews):
     """ Transform texts to Tf-Idf coordinates and cluster texts using K-Means """
-
+    i=0
+    labelDict = {}
     for gameSystemKey, systemDict in reviews.items():
+        count = 0
         for gameKey, gameReview in systemDict.items():
-        
-            if "Review" in gameReview:
-                lowers = gameReview["Review"].lower()
+            count+=1
+            if count > 100:#just to reduce sample size
+                break
+            if "review" in gameReview:
+                lowers = gameReview["review"].lower()
                 no_punctuation = lowers.translate(string.punctuation)
                 token_dict[gameKey] = no_punctuation
+
                 #print(gameReview["Review"])
                 #print(gameKey)
- 
+    #sort values by keys
+
+    
     tfidf = TfidfVectorizer(tokenizer=tokenize, stop_words='english')
-    tfidf_model = tfidf.fit_transform(token_dict.values()).todense()
-    eps = 0.8
-    min_samples = 10
+    sortedValues = [token_dict[key] for key in sorted(token_dict.keys())]
+    sortedLabels = [key for key in sorted(token_dict.keys())]
+
+    tfidf_model = tfidf.fit_transform(sortedValues).todense()
+    eps = .75
+    min_samples = 2
                 # metric is the function reference, not the string key.
     metric = distance.euclidean
     dbscan_model = DBSCAN(eps=eps, min_samples=min_samples).fit(tfidf_model)
 #    dbscan_model.fit(tfidf_model)
  
-    clustering = collections.defaultdict(list)
- 
+    tfidf_cluster = collections.defaultdict(list)
+
+    #pprint(dbscan_model.labels_)
     for idx, label in enumerate(dbscan_model.labels_):
-        #clustering[label].append(idx)
-        print(label)
-        print(idx)
+        tfidf_cluster[label].append(sortedLabels[idx])
  
-    #return clustering
+    return tfidf_cluster
  
 
 def stem_tokens(tokens, stemmer):
@@ -71,8 +82,8 @@ def tokenize(text):
 for k, v in reviews.items():
     for subKey, gameReview in v.items():
         
-        if "Review" in gameReview:
-            lowers = gameReview["Review"].lower()
+        if "review" in gameReview:
+            lowers = gameReview["review"].lower()
             no_punctuation = lowers.translate(string.punctuation)
             token_dict[k] = no_punctuation
 
@@ -86,4 +97,4 @@ for k, v in reviews.items():
         token_dict[file] = no_punctuation"""
         
 #this can take some time
-cluster_text(reviews)
+print(cluster_text(reviews))

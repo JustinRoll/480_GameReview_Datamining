@@ -1,5 +1,5 @@
 import pickle
-reviews = pickle.load(open("data/gameReviewDict.p", "rb"))
+#reviews = pickle.load(open("data/gameReviewDict.p", "rb"))
 
 #reviews = {}
 #ff10 = "Ff10 is a great game"
@@ -23,7 +23,7 @@ def isInvalidReview(review):
             catCount += 1
         if len(reviewKey) > 100:
             tooLong = True
-
+        
     if len(baseCategories) != catCount or tooLong == True:
         
         print(catCount)
@@ -54,7 +54,7 @@ def main():
     evalReviews(reviews)
 
 
-main()
+#main()
 
 
 
