@@ -28,7 +28,7 @@ class Parser:
             userReviewDict["UserName"] = lineArray[1].split(":")[1].strip()
             userReviewDict["Rating"] = lineArray[2].split(":")[1].strip()
             userReviewDict["date"] = lineArray[3].replace("Date:", "").strip()
-            userReviewDict["review"] = " ".join(lineArray[4:])
+            userReviewDict["review"] = " ".join(lineArray[4:]).replace("||","\n")
             return userReviewDict
         else:
             #print("bad dict")
@@ -47,15 +47,13 @@ class Parser:
             regex = re.compile(regexText)
             result = regex.search(line)
             if result:
-                #print(result.groups())
-                #print(result.group(1))
                 if result.group(1).strip() == "Scores":
                     subDict = {}
                     subRegex = r"(\w+ \w+): (\w+.[0-9]+)"
                     subGroups = re.findall(subRegex, result.group(2).strip())
                     for subGroup in subGroups:
-                        subDict[subGroup[0]] = float(subGroup[1])
-                    review["Scores"] = subDict
+                        subDict[subGroup[0].lower()] = float(subGroup[1])
+                    review["scores"] = subDict
                 elif "User Reviews" in result.group(1):
                     #print(result.group(1))
                     userReviewList = []
@@ -65,7 +63,7 @@ class Parser:
                         userReviewDict = self.parseUserReview(userReview)
                         if userReviewDict:
                             userReviewList.append(userReviewDict)
-                    review["userReviews"] = userReviewList
+                    review["user reviews"] = userReviewList
 
                 elif result.group(1).strip() == "Addition": #working
                     subDict = {}
@@ -73,10 +71,11 @@ class Parser:
                     parsedlines = result.group(2).strip().replace("||", "\n")
                     subGroups = re.findall(subRegex, result.group(2).strip())
                     for subGroup in subGroups:
-                        subDict[subGroup[0]] = subGroup[1]
-                    review['Addition'] = subDict
+                        subDict[subGroup[0].lower()] = subGroup[1]
+                    review['addition'] = subDict
                 else:
-                    review[result.group(1).strip()] = result.group(2).strip()
+                    review[result.group(1).strip().lower()] = result.group(2).strip().replace("||", "\n")
+                    #print(review[result.group(1).strip()])
 
         return review
 

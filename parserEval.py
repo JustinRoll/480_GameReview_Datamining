@@ -9,26 +9,52 @@ reviews = pickle.load(open("data/gameReviewDict.p", "rb"))
 
 
 #"ps2" : {"Final Fantasy 10": "here is some text"} , {"Dragon Quest 7": "here is some more text"} }
-badReviews = []
-totalReviewCount = 0
 
-for k, v in reviews.items():
-    for subKey, gameReview in v.items():
-        #print(subKey)
-        totalReviewCount+= 1
-        for key, value in gameReview.items():
-            if len(key) < 100:
-                print(key)
-            else:
-                print(" ")
-                print("Bad review for %s" % subKey)
-                print(" ")
-                badReviews.append(subKey)
-                break
+
+#evaluate the review and check if it has all the categories
+def isInvalidReview(review):
+    catCount = 0
+    tooLong = False
+
+    baseCategories = {"the good":True, "the bad":True, "game name":True, "date":True, "scores":True, "addition":True, "user reviews":True}
+    for reviewKey, reviewValue in review.items():
+        #print(reviewKey)
+        if reviewKey in baseCategories:
+            catCount += 1
+        if len(reviewKey) > 100:
+            tooLong = True
+
+    if len(baseCategories) != catCount or tooLong == True:
+        
+        print(catCount)
+        return True
+    else:
+        return False
+
+
+def evalReviews(reviews):
+
+    badReviews = []
+    totalReviewCount = 0
+
+    for k, v in reviews.items():
+        for gameName, gameReview in v.items():
+            #print(subKey)
+            if isInvalidReview(gameReview):
+                print("bad review for %s" % gameName)
+                badReviews.append(gameName)
+            
+            totalReviewCount+= 1
+    
+    print("This many bad reviews: %d" %len(badReviews))
+
+    print("This many total reviews: %d" %totalReviewCount) 
+
 def main():
-    pass
+    evalReviews(reviews)
 
 
-print("This many bad reviews: %d" %len(badReviews))
+main()
 
-print("This many total reviews: %d" %totalReviewCount)
+
+
