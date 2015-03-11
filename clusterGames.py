@@ -44,7 +44,7 @@ def cluster_games(reviews):
             count+=1
             if count > 50:#just to reduce sample size
                 break
-            if "review" in gameReview:
+            if "review" in gameReview and "scores" in gameReview and "gamespot score" in gameReview["scores"]:
                 lowers = gameReview["review"].lower()
                 no_punctuation = lowers.translate(string.punctuation)
                 token_dict[gameKey] = no_punctuation
