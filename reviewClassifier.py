@@ -1,6 +1,8 @@
 import random,operator,nltk
 import functools
 import rmse
+from sklearn.naive_bayes import MultinomialNB
+from nltk.classify.scikitlearn import SklearnClassifier
 from nltk.corpus import udhr
 from nltk import bigrams, trigrams, ngrams
 from nltk.tokenize import word_tokenize, sent_tokenize 
@@ -30,7 +32,7 @@ class Classifier:
         wordDict, topicWordDict, sents, stemmedWordDict = self.extractReviewWords(doc)
         wordList = sorted([word.lower() for word in set(stemmedWordDict.keys()) if word not in stopwords.words('English') and word not in ',-.;();$' and word not in '-' and word not in '.'],
                 key = lambda x : stemmedWordDict[x], reverse=True)
-        top10WordList = [wordList[i] for i in range(0, 10 if len(wordList) > 10 else len(wordList) - 1)]
+        topWordList = [wordList[i] for i in range(0, 100 if len(wordList) > 100 else len(wordList) - 1)]
         positiveSentenceCount = 0
         negativeSentenceCount = 0
 
@@ -53,13 +55,11 @@ class Classifier:
             #wordTrigrams = trigrams(tokenizedSent)
             #for trigram in wordTrigrams:
             #    featureDict[trigram] = True
-        for unigram in top10WordList:
-            featureDict[unigram] = 1 #self.getBucket(stemmedWordDict[unigram])
+        for unigram in topWordList:
+            featureDict[unigram] = stemmedWordDict[unigram] #self.getBucket(stemmedWordDict[unigram])
         
-        featureDict["posSentences"] = self.getBucket(positiveSentenceCount)
-        featureDict["negSentences"] = self.getBucket(negativeSentenceCount)
-        #yelpFeatures = self.yelpQuery.getFeatures(doc.name, doc.city, 1)
-        #featureDict.update(yelpFeatures)
+        featureDict["posSentences"] = positiveSentenceCount
+        featureDict["negSentences"] = negativeSentenceCount
         return featureDict
 
     
@@ -98,9 +98,9 @@ class Classifier:
         featureSets = [(self.getOverallFeatures(d),label) for (d, label) in docs]
         firstThird = int(len(featureSets)/3)
         train, test = featureSets[:firstThird], featureSets[firstThird:]
-
-        classifier = nltk.NaiveBayesClassifier.train(train)
-        print(classifier.show_most_informative_features(20))
+        classifier = SklearnClassifier(MultinomialNB()).train(train)
+        #classifier = nltk.NaiveBayesClassifier.train(train)
+        #print(classifier.show_most_informative_features(20)) can't show most informative features with multinomial
  
         return rmse.getError(classifier, test), nltk.classify.accuracy(classifier,test) 
  
