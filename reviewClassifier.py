@@ -1,6 +1,6 @@
 import random,operator,nltk
 import functools
-import rmse
+import string
 from sklearn.naive_bayes import MultinomialNB
 from nltk.classify.scikitlearn import SklearnClassifier
 from nltk.corpus import udhr
@@ -9,22 +9,14 @@ from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.corpus import stopwords, wordnet
 from nltk.stem.snowball import SnowballStemmer
 from sentencePolarity import SentencePolarity
+from pickle import dump
+from operator import itemgetter
 
 class Classifier:
 
-    def __init__(self, reviews):
+    def __init__(self, reviews=None):
         self.reviews = reviews
         self.polarity = SentencePolarity('twitter_sentiment_list.csv')
-    
-    def getBucket(self, count):
-        if count <= 0:
-            returnCount = None
-        elif count >= 1 and count <= 5:
-            returnCount = "low"
-        elif count >= 6:
-            returnCount = "high"
-
-        return returnCount
     
     def getOverallFeatures(self, doc):
          
@@ -45,16 +37,26 @@ class Classifier:
             if negProb >= .6:
                 negativeSentenceCount += 1
 
-            #for word in tokenizedSent:
-            #    posProb, negProb = self.polarity.classifyWord(word)
-            #    if negProb >= .8:
-            #        featureDict[word + " neg polarity"] = 1
-            #    if posProb >= .8:
-            #        featureDict[word + " pos polarity"] = 1 
+            for word in tokenizedSent:
+                posProb, negProb = self.polarity.classifyWord(word)
+                if negProb >= .8:
+                    if word + " neg polarity" in featureDict:
+                        featureDict[word + " neg polarity"] += 1
+                    else:
+                        featureDict[word + " neg polarity"] = 1
+                    featureDict[word + " neg polarity"] = 1
+                if posProb >= .8:
+                    if word + " pos polarity" in featureDict:
+                        featureDict[word + " pos polarity"] += 1 
+                    else:
+                        featureDict[word + " pos polarity"] = 1 
+            wordTrigrams = [" ".join(item) for item in trigrams(tokenizedSent)]
+            for trigram in wordTrigrams:
+                if trigram not in featureDict:
+                    featureDict[trigram] = 1
+                else:
+                    featureDict[trigram] += 1
 
-            #wordTrigrams = trigrams(tokenizedSent)
-            #for trigram in wordTrigrams:
-            #    featureDict[trigram] = True
         for unigram in topWordList:
             featureDict[unigram] = stemmedWordDict[unigram] #self.getBucket(stemmedWordDict[unigram])
         
@@ -76,9 +78,9 @@ class Classifier:
                 #to do: pos tag all words?        
         wordTokens = word_tokenize(doc)
         for word in wordTokens:
+            word = word.translate(string.punctuation) 
             self.incrementDictCount(word, wordDict)
             self.incrementDictCount(stemmer.stem(word), stemmedWordDict)
-                        #self.incrementDictCount(key, topicWordDict)
         for sent in sent_tokenize(doc):
             sents.append(sent)
         return wordDict, topicWordDict, sents, stemmedWordDict  
@@ -96,22 +98,36 @@ class Classifier:
         random.shuffle(docs)
 
         featureSets = [(self.getOverallFeatures(d),label) for (d, label) in docs]
-        firstThird = int(len(featureSets)/3)
-        train, test = featureSets[:firstThird], featureSets[firstThird:]
+        trainIndex = int(len(featureSets)/5)*4
+        train, test = featureSets[:trainIndex], featureSets[trainIndex:]
         classifier = SklearnClassifier(MultinomialNB()).train(train)
+
+        
         #classifier = nltk.NaiveBayesClassifier.train(train)
         #print(classifier.show_most_informative_features(20)) can't show most informative features with multinomial
  
-        return rmse.getError(classifier, test), nltk.classify.accuracy(classifier,test) 
+        return classifier, nltk.classify.accuracy(classifier,test) 
  
+    def classify(self, classifier, doc):
+        features = self.getOverallFeatures(doc)
+        
+        tempResult = nltk.classify.accuracy(classifier, [(features, 1)])
+        return 1 if tempResult == 1.0 else 0
+
     def getAverages(self, function):
         accuracyTotal = 0.0
-        rmseTotal = 0.0
         accuracies = []
+        classifiers = []
         for i in range(0, 5):
-            rmse, accuracy = function()
+            classifier, accuracy = function()
             accuracies.append(accuracy)
+            classifiers.append([classifier, accuracy])
             accuracyTotal += accuracy
-            rmseTotal += rmse
         print(accuracies)
-        return rmseTotal / 5.0, accuracyTotal / 5.0
+        #pickle the run with the highest accuracy
+        bestClassifier = sorted(classifiers, key=itemgetter(1), reverse=True)[0][0]
+        classoutput = open('reviewclassifier.p', 'wb')
+        dump(bestClassifier, classoutput, -1)
+        classoutput.close() 
+
+        return accuracyTotal / 5.0
