@@ -4,7 +4,7 @@ import string
 import os
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.cluster.dbscan_ import dbscan
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, HashingVectorizer
 from sklearn.manifold import MDS
 from nltk.stem.porter import PorterStemmer
 from scipy.spatial import distance
@@ -12,12 +12,10 @@ import collections
 import pickle
 from pprint import pprint
 import numpy as np
+from featureUtil import *
 
 reviews = pickle.load(open("data/gameReviewDict.p", "rb"))
 
-count = 0
-for review in reviews:
-    count+= len(reviews)
 
 token_dict = {}
 stemmer = PorterStemmer()
@@ -42,27 +40,44 @@ def cluster_games(reviews):
         count = 0
         for gameKey, gameReview in systemDict.items():
             count+=1
-            if count > 50:#just to reduce sample size
+            if count > 20:#just to reduce sample size
                 break
             if "review" in gameReview and "scores" in gameReview and "gamespot score" in gameReview["scores"]:
                 lowers = gameReview["review"].lower()
                 no_punctuation = lowers.translate(string.punctuation)
                 token_dict[gameKey] = no_punctuation
+                #print(getEntities(gameReview["review"]))
     cluster = cluster_text(token_dict)
     return cluster
 
-def cluster_text(token_dict):
+def cluster_gamesOld(reviews):
+    for gameSystemKey, systemDict in reviews.items():
+        count = 0
+        for gameKey, gameReview in systemDict.items():
+            count+=1
+            if count > 20:#just to reduce sample size
+                break
+            if "review" in gameReview and "scores" in gameReview and "gamespot score" in gameReview["scores"]:
+                lowers = gameReview["review"].lower()
+                no_punctuation = lowers.translate(string.punctuation)
+                token_dict[gameKey] = no_punctuation
+                #print(getEntities(gameReview["review"]))
+    cluster = cluster_text(token_dict)
+    return cluster 
+
+
+def cluster_text(docs):
     """ Transform texts to Tf-Idf coordinates and cluster texts using DBSCAN """
 
     
-    tfidf = TfidfVectorizer(tokenizer=tokenize, stop_words='english')
+    """tfidf = HashingVectorizer(tokenizer=tokenize, stop_words='english')
     sortedValues = [token_dict[key] for key in sorted(token_dict.keys())]
-    sortedLabels = [key for key in sorted(token_dict.keys())]
+    sortedLabels = [key for key in sorted(token_dict.keys())]"""
     tfidf_model = tfidf.fit_transform(sortedValues).todense()
-    eps = .8 #radius
+    eps = .08 #radius
     min_samples = 2 #number of samples in a cluster
     
-    metric = distance.euclidean
+    metric = distance.cosine
     dbscan_model = DBSCAN(eps=eps, min_samples=min_samples, metric = metric).fit(tfidf_model)
  
     tfidf_cluster = collections.defaultdict(list)
@@ -70,9 +85,31 @@ def cluster_text(token_dict):
     for idx, label in enumerate(dbscan_model.labels_):
         tfidf_cluster[label].append(sortedLabels[idx])
 
-    plot(tfidf_model, dbscan_model, sortedLabels)
+    #plot(tfidf_model, dbscan_model, sortedLabels)
     return tfidf_cluster
+
+def cluster_text_Old(token_dict, entities):
+    """ Transform texts to Tf-Idf coordinates and cluster texts using DBSCAN """
+
+    #entities = [getEntities(doc) for docName, doc in 
+    tfidf = TfidfVectorizer(tokenizer=tokenize, stop_words='english')
+    sortedValues = [token_dict[key] for key in sorted(token_dict.keys())]
+    sortedLabels = [key for key in sorted(token_dict.keys())]
+    tfidf_model = tfidf.fit_transform(sortedValues).todense()
+    eps = .37 #radius
+    min_samples = 2 #number of samples in a cluster
+    
+    metric = distance.cosine
+    dbscan_model = DBSCAN(eps=eps, min_samples=min_samples, metric = metric).fit(tfidf_model)
  
+    tfidf_cluster = collections.defaultdict(list)
+
+    for idx, label in enumerate(dbscan_model.labels_):
+        tfidf_cluster[label].append(sortedLabels[idx])
+
+    #plot(tfidf_model, dbscan_model, sortedLabels)
+    return tfidf_cluster 
+
 
 def stem_tokens(tokens, stemmer):
     stemmed = []
