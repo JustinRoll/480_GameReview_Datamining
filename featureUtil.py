@@ -100,9 +100,6 @@ def makeChart2(entities):
     plt.show()
 
 
-"""
-Simple demo of a horizontal bar chart.
-"""
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import numpy as np
 import matplotlib.pyplot as plt
@@ -179,8 +176,35 @@ def makeChartOld(entities):
     #autolabel(bar1, labels)
     plt.show()
     
+def getEntityFeatures(doc):
+    entities = getEntities(doc)
+    featureDict = {}
+    for entity in entities:
+        featureDict[entity["text"] + "_ex_"] = int(entity["count"])
+    return featureDict      
 
-      
+def getKeyWordsFeatures(doc):
+    keywords = getKeyWords(doc)
+    featureDict = {}
+    for keyword in keywords:
+        featureDict[keyword["text"] + "_kw_"] = float(keyword["relevance"])
+    return featureDict      
+
+def getKwEntityFeatures(doc):
+    featureDict = getEntityFeatures(doc)
+    kwDict = getKeyWordsFeatures(doc)
+    featureDict.update(kwDict)
+    return featureDict
+
+
+def getKeyWords(text):
+    response = alchemyapi.keywords('text', text, {'sentiment': 1})
+
+    if response['status'] == 'OK':
+        return [entity for entity in response['keywords']]
+    else:
+        print('Error in entity extraction call: ', response['statusInfo'])  
+        return None 
 
 def getEntities(text):
     response = alchemyapi.entities('text', text, {'sentiment': 1})

@@ -13,9 +13,9 @@ import pickle
 from pprint import pprint
 import numpy as np
 from featureUtil import *
-
-reviews = pickle.load(open("data/gameReviewDict.p", "rb"))
-
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.neighbors import NearestNeighbors
+from sklearn.cluster import KMeans, MiniBatchKMeans
 
 token_dict = {}
 stemmer = PorterStemmer()
@@ -34,20 +34,43 @@ def process_text(text, stem=True):
 #return a purity level
 def cluster_purity(clusters, goldStandard):
     pass
- 
+
+#fit game into a cluster, then figure out what game is in that cluster by looking up all the values
+def getGameCluster(reviews, gameName, gameText):
+    numReviews = 800
+    revDict = listn_reviews(reviews, numReviews)
+    revDict[gameName] = gameText.lower().translate(string.punctuation)
+    cluster = mkm_cluster_text(token_dict, int(numReviews/8), gameName=gameName)
+    return cluster
+
+def listn_reviews(reviews, n=100):
+    count = 0
+    for gameSystemKey, systemDict in reviews.items():
+        if count > n:
+            break
+        for gameKey, gameReview in systemDict.items():
+            if count > n:#just to reduce sample size
+                break
+            if "review" in gameReview and "scores" in gameReview and "gamespot score" in gameReview["scores"]:
+                lowers = gameReview["review"].lower()
+                no_punctuation = lowers.translate(string.punctuation)
+                token_dict[gameKey] = no_punctuation
+                count += 1
+    return token_dict 
+
 def cluster_games(reviews):
     for gameSystemKey, systemDict in reviews.items():
         count = 0
         for gameKey, gameReview in systemDict.items():
             count+=1
-            if count > 20:#just to reduce sample size
+            if count > 50:#just to reduce sample size
                 break
             if "review" in gameReview and "scores" in gameReview and "gamespot score" in gameReview["scores"]:
                 lowers = gameReview["review"].lower()
                 no_punctuation = lowers.translate(string.punctuation)
                 token_dict[gameKey] = no_punctuation
                 #print(getEntities(gameReview["review"]))
-    cluster = cluster_text(token_dict)
+    cluster = mkm_cluster_text(token_dict)
     return cluster
 
 def cluster_gamesOld(reviews):
@@ -65,28 +88,69 @@ def cluster_gamesOld(reviews):
     cluster = cluster_text(token_dict)
     return cluster 
 
-
-def cluster_text(docs):
-    """ Transform texts to Tf-Idf coordinates and cluster texts using DBSCAN """
-
-    
-    """tfidf = HashingVectorizer(tokenizer=tokenize, stop_words='english')
+def mkm_cluster_text(docs, numClusters, gameName=None):
+    """ Transform texts to coordinates using named entities and cluster texts using DBSCAN """
+    tfidf = TfidfVectorizer(tokenizer=tokenize, stop_words='english')
     sortedValues = [token_dict[key] for key in sorted(token_dict.keys())]
-    sortedLabels = [key for key in sorted(token_dict.keys())]"""
-    tfidf_model = tfidf.fit_transform(sortedValues).todense()
-    eps = .08 #radius
+    sortedLabels = [key for key in sorted(token_dict.keys())]
+    model = tfidf.fit_transform(sortedValues)    
+    
+    km = MiniBatchKMeans(n_clusters=numClusters, init='k-means++', n_init=1, init_size=1000, batch_size=1000).fit(model)
+ 
+    tfidf_cluster = collections.defaultdict(list)
+    inpCluster = -1
+    for idx, label in enumerate(km.labels_):
+        tfidf_cluster[label].append(sortedLabels[idx])
+        if gameName != None and sortedLabels[idx] == gameName:
+            inpCluster = label    
+    
+    if gameName != None and inpCluster != -1:
+        return tfidf_cluster[inpCluster]
+    else:
+        return tfidf_cluster 
+
+def dbscancluster_text(docs):
+    """ Transform texts to coordinates using named entities and cluster texts using DBSCAN """
+    
+    vec = DictVectorizer()
+    #tfidf = HashingVectorizer(tokenizer=tokenize, stop_words='english')
+    docFeaturesLabeled = [(docName, getKwEntityFeatures(doc)) for docName, doc in docs.items()]
+    docFeatures = [item[1] for item in docFeaturesLabeled]
+    labels = [item[0] for item in docFeaturesLabeled]
+    model = vec.fit_transform(docFeatures).todense()
+    eps = .7 #radius
     min_samples = 2 #number of samples in a cluster
     
     metric = distance.cosine
-    dbscan_model = DBSCAN(eps=eps, min_samples=min_samples, metric = metric).fit(tfidf_model)
+    dbscan_model = DBSCAN(eps=eps, min_samples=min_samples, metric = metric).fit(model)
  
     tfidf_cluster = collections.defaultdict(list)
 
     for idx, label in enumerate(dbscan_model.labels_):
-        tfidf_cluster[label].append(sortedLabels[idx])
+        tfidf_cluster[label].append(labels[idx])
 
     #plot(tfidf_model, dbscan_model, sortedLabels)
     return tfidf_cluster
+
+def knncluster_text(docs):
+    """ Transform texts to coordinates using named entities and cluster texts using DBSCAN """
+    
+    vec = DictVectorizer()
+    #tfidf = HashingVectorizer(tokenizer=tokenize, stop_words='english')
+    docFeaturesLabeled = [(docName, getKwEntityFeatures(doc)) for docName, doc in docs.items()]
+    docFeatures = [item[1] for item in docFeaturesLabeled]
+    labels = [item[0] for item in docFeaturesLabeled]
+    model = vec.fit_transform(docFeatures)
+   
+    metric = distance.cosine
+    knn_model = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(model) 
+    tfidf_cluster = collections.defaultdict(list)
+
+    for idx, label in enumerate(knn_model.labels_):
+        tfidf_cluster[label].append(labels[idx])
+
+    #plot(tfidf_model, dbscan_model, sortedLabels)
+    return tfidf_cluster 
 
 def cluster_text_Old(token_dict, entities):
     """ Transform texts to Tf-Idf coordinates and cluster texts using DBSCAN """
@@ -109,7 +173,6 @@ def cluster_text_Old(token_dict, entities):
 
     #plot(tfidf_model, dbscan_model, sortedLabels)
     return tfidf_cluster 
-
 
 def stem_tokens(tokens, stemmer):
     stemmed = []
@@ -184,4 +247,4 @@ def plot(X, db, labels_true):
         token_dict[file] = no_punctuation"""
         
 #this can take some time
-print(cluster_games(reviews))
+#print(cluster_games(reviews))
