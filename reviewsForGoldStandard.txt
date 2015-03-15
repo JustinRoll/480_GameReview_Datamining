@@ -58,10 +58,8 @@ HarvestMoonFriendsofMineralTown.txt
 HarvestMoonMoreFriendsofMineralTown.txt
 Iridion3D.txt
 IridionII.txt
-KingdomHeartsChainofMemories.txt
 Kirby&theAmazingMirror.txt
 KirbyNightmareinDreamLand.txt
-LadySia.txt
 LegendsofWrestlingII.txt
 LegoStarWars.txt
 LegoStarWarsIITheOriginalTrilogy.txt
@@ -127,9 +125,6 @@ RaymanHoodlum'sRevenge.txt
 RaymanRavingRabbids.txt
 SSX3.txt
 SSXTricky.txt
-SabreWulf.txt
-ScurgeHive.txt
-SeaTraderRiseofTaipan.txt
 SegaArcadeGallery.txt
 SegaSmashPack.txt
 ShiningSoul.txt
@@ -149,13 +144,11 @@ SpyroSeasonofIce.txt
 StarWarsEpisodeIIAttackoftheClones.txt
 StarWarsTheNewDroidArmy.txt
 StarWarsTrilogyApprenticeoftheForce.txt
-StreetFighterAlpha3.txt
 SummonNightSwordcraftStory.txt
 SummonNightSwordcraftStory2.txt
 SuperMarioAdvance.txt
 SuperMarioAdvance4SuperMarioBros.3.txt
 SuperMarioWorldSuperMarioAdvance2.txt
-SuperPuzzleFighterII.txt
 SuperRobotTaisenOriginalGeneration.txt
 SuperRobotTaisenOriginalGeneration2.txt
 TMNT.txt
