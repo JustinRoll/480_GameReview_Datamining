@@ -1,7 +1,7 @@
 from tkinter import *
 import pickle
 from tkinter import messagebox
-#import randomGameTest.py
+import randomGameTest.py
 
 # this may be redundant when randomGameTest.py is actually imported
 #classData =  pickle.load(open("reviewclassifier.p", "rb", -1))
@@ -17,8 +17,9 @@ def Classify():
 def Analyze():
    game = textBox.get("1.0",END)
    # HAVE TO UNCOMMENT AND TEST THIS BAD BOY WOOOOOOOOOOOOOO
-   #if len(game) > 0:
-   #   print(classifyGame(game))
+   if len(game) > 0:
+      print(classifyGame(game))
+   #   print(makeChart(getEntities(fText)))
    messagebox.showinfo(title="Analysis Results", message="This was a positive review :)")
    messagebox.showinfo(title="Analysis Results", message="This was a negative review :(")
 
