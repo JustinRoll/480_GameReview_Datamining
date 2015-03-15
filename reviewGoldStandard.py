@@ -98,6 +98,10 @@ goldStandard = ['AdvanceWars.txt','AdvanceWars2BlackHoleRising.txt'], \
 'Yu-Gi-Oh!WorldwideEditionStairwaytotheDestinedDuel.txt']
 
 goldStandardList = []
+goldStandardMap = {}
+i = 0
 for category in goldStandard:
-	for game in category:
-		goldStandardList.append(game)
+    for game in category:
+        goldStandardList.append(game)
+        goldStandardMap[game] = i
+    i+=1

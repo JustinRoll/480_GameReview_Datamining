@@ -21,7 +21,7 @@ class Parser:
         #Rating: 9.3
         #Date: Aug 30, 2006 1:59 pm PT
         #Review:  Okay, let's start with the
-        
+
         if "username:" in text.lower() and "rating:" in text.lower() and "date:" in text.lower() and "review:" in text.lower():
             userReviewDict = {}
             lineArray = text.split("||")
@@ -97,7 +97,8 @@ def parseDir(path):
             reviews[folder] = parseFiles(path + folder + "/")
     return reviews
 
-reviews = parseDir("/Users/jroll/dev/480/480_GameReview_Datamining/data/Gamespot-Cleaned/")
+reviews = parseDir("/home/mouse/480/project_NLP/480_GameReview_Datamining/data/")
+#reviews = parseDir("/Users/jroll/dev/480/480_GameReview_Datamining/data/Gamespot-Cleaned/")
 pickle.dump(reviews, open( "data/gameReviewDict.p", "wb" ))
 #print(savedDict)
 #print(reviews)

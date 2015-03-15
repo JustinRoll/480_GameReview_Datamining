@@ -16,6 +16,7 @@ from featureUtil import *
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans, MiniBatchKMeans
+import reviewGoldStandard
 
 token_dict = {}
 stemmer = PorterStemmer()
@@ -32,8 +33,28 @@ def process_text(text, stem=True):
 
 #future method, evaluate the clusters based on a gold standard
 #return a purity level
-def cluster_purity(clusters, goldStandard):
-    pass
+
+#assume that we have global variables goldStandard, goldStandardList:
+def calculate_purity(clusters):
+    #for each cluster, get the count of the most frequent class, keep a running sum of this, then at the end
+    #divide by the number of samples in the gold standard 
+    #clusters will be a dictionary with index 0: cluster1, index 1: cluster2 etc
+    #goldStandard is an array with index 0: labeled category cluster1, ... etc.        
+    numAgreed = 0
+    for clusterIndex, cluster in clusters.items():
+        agreeMap = {}
+        #create a map with categories and their counts. then sort the map and grab the category with the highest count
+        for sample in cluster:
+            sampleclass = goldStandardMap[sample]
+            if sampleClass in agreeMap:
+                agreeMap[sampleClass] += 1
+            else:
+                agreeMap[sampleClass] = 1
+                #now we can choose the cluster with the highest class
+        highestList = sorted([(cluster, agreed) for cluster, agreed in agreeMap.items()], key=itemgetter[1], reverse=True)
+        highest = highestList[0][1]
+        numAgreed += highest
+    return numAgreed * 1.0 / float(len(goldStandardList))
 
 #fit game into a cluster, then figure out what game is in that cluster by looking up all the values
 def getGameCluster(reviews, gameName, gameText):
