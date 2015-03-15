@@ -38,9 +38,17 @@ def getUserReviews():
     return reviewsList 
 
 def main():
-    classifier = Classifier(getAllReviews())
+#    classifier = Classifier(getAllReviews())
+    reviewList = []
+    for review in getAllReviews():
+        if review[1].lower() == "gameboyadvance":
+            reviewList.append(review[0])
 
-    print("Overall Score Average accuracy: %f" % (classifier.getAverages(classifier.classifyOverallReviews)))
+    reviewList = sorted(reviewList)
+    for review in reviewList:
+        print(review)
+
+#    print("Overall Score Average accuracy: %f" % (classifier.getAverages(classifier.classifyOverallReviews)))
 """
 #    print("Exact Score (0-5) Paragraph rmse: %f, accuracy: %f" % (classifier.classifyParagraphReviewsExact()))
 #    print("Overall rmse: %f, accuracy: %f" % (classifier.classifyOverallReviews()))
