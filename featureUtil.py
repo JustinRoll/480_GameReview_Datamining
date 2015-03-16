@@ -105,19 +105,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def makeChart(entities):
-    data = [(entity["text"], int(entity["count"])) for entity in entities]
-    data = sorted(data, key=itemgetter(1))
-    N = len( data )
+    data = sorted([(entity["text"], int(entity["count"]), entity["sentiment"]["type"]) for entity in entities], key=itemgetter(1))
+    posdata = [item for item in sorted(data, key=itemgetter(1)) if item[2].lower() == "positive"]
+    negdata =  [item for item in sorted(data, key=itemgetter(1)) if item[2].lower() == "negative"] 
+    neutraldata =  [item for item in sorted(data, key=itemgetter(1)) if item[2].lower() == "neutral"] 
+    N = len(posdata) + len(negdata) + len(neutraldata)
     y = np.arange(1, N+1)
-    x = [ num for (s, num) in data ] 
-    labels = np.array([s for (s, num) in data]) 
-
+    posx = np.array([ num for (s, num, sent) in data  if sent.lower() == "positive"]) 
+    negx = np.array([ num for (s, num, sent) in data if sent.lower() == "negative"])
+    neutralx = np.array([ num for (s, num, sent) in data if sent.lower() == "neutral"])
+    labels = np.array([s for (s, num, sent) in data]) 
     # Example data
-    y_pos = np.arange(len(labels))
-    performance = x
-    error = np.random.rand(len(labels))
 
-    plt.barh(y_pos, performance, align='center', alpha=0.4)
+    index = 0
+    for entity, count, sentiment in data:
+        if sentiment.lower() == "positive":
+                color = "g"
+        elif sentiment.lower() == "negative":
+                color = "r"
+        else:
+                color = "y"
+        plt.barh(index - 0.5, count, 0.7, color=color)
+        index+=1
+    y_pos = np.arange(N)
+    
     plt.yticks(y_pos, labels)
     plt.xlabel('Entity Count')
     plt.title('Named Entities')

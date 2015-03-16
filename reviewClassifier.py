@@ -118,7 +118,7 @@ class Classifier:
         accuracyTotal = 0.0
         accuracies = []
         classifiers = []
-        for i in range(0, 2):
+        for i in range(0, 5):
             classifier, accuracy = function()
             accuracies.append(accuracy)
             classifiers.append([classifier, accuracy])

@@ -1,4 +1,5 @@
 import nltk
+import time
 from sklearn import metrics
 import string
 import os
@@ -35,7 +36,7 @@ def process_text(text, stem=True):
 #return a purity level
 
 #assume that we have global variables goldStandard, goldStandardList:
-def calculate_purity(clusters):
+def calculate_purity(clusters, gs):
     #for each cluster, get the count of the most frequent class, keep a running sum of this, then at the end
     #divide by the number of samples in the gold standard 
     #clusters will be a dictionary with index 0: cluster1, index 1: cluster2 etc
@@ -45,16 +46,16 @@ def calculate_purity(clusters):
         agreeMap = {}
         #create a map with categories and their counts. then sort the map and grab the category with the highest count
         for sample in cluster:
-            sampleclass = goldStandardMap[sample]
+            sampleClass = gs.goldStandardMap[sample]
             if sampleClass in agreeMap:
                 agreeMap[sampleClass] += 1
             else:
                 agreeMap[sampleClass] = 1
                 #now we can choose the cluster with the highest class
-        highestList = sorted([(cluster, agreed) for cluster, agreed in agreeMap.items()], key=itemgetter[1], reverse=True)
+        highestList = sorted([(cluster, agreed) for cluster,agreed in agreeMap.items()], key=itemgetter(1), reverse=True)
         highest = highestList[0][1]
         numAgreed += highest
-    return numAgreed * 1.0 / float(len(goldStandardList))
+    return numAgreed * 1.0 / float(len(gs.goldStandardList))
 
 #fit game into a cluster, then figure out what game is in that cluster by looking up all the values
 def getGameCluster(reviews, gameName, gameText):
@@ -62,6 +63,7 @@ def getGameCluster(reviews, gameName, gameText):
     revDict = listn_reviews(reviews, numReviews)
     revDict[gameName] = gameText.lower().translate(string.punctuation)
     cluster = mkm_cluster_text(token_dict, 60, gameName=gameName)
+    
     return cluster
 
 def listn_reviews(reviews, n=100):
@@ -94,6 +96,52 @@ def cluster_games(reviews):
     cluster = mkm_cluster_text(token_dict)
     return cluster
 
+def cluster_games(reviews):
+    for gameSystemKey, systemDict in reviews.items():
+        count = 0
+        for gameKey, gameReview in systemDict.items():
+            count+=1
+            if count > 50:#just to reduce sample size
+                break
+            if "review" in gameReview and "scores" in gameReview and "gamespot score" in gameReview["scores"]:
+                lowers = gameReview["review"].lower()
+                no_punctuation = lowers.translate(string.punctuation)
+                token_dict[gameKey] = no_punctuation
+                #print(getEntities(gameReview["review"]))
+    cluster = mkm_cluster_text(token_dict)
+    return cluster 
+
+
+def cluster_gamesGSkb(reviewsList, gs):
+    tokenDict = {}
+    for review in reviewsList:
+    #reviewsList.append((gameKey, gameSystemKey, gameReview)) 
+            gameKey = review[0]
+            lowers = review[2]["review"].lower()
+            no_punctuation = lowers.translate(string.punctuation)
+            token_dict[gameKey] = no_punctuation
+                #print(getEntities(gameReview["review"]))
+    print(len(reviewsList))
+    print(len(gs.goldStandard))
+    start = time.time()
+    cluster = mkm_cluster_textEnt(token_dict, len(gs.goldStandard))
+    print("%f" % (time.time() - start)) 
+    return cluster  
+
+def cluster_gamesGSDb(reviewsList, gs):
+    tokenDict = {}
+    for review in reviewsList:
+    #reviewsList.append((gameKey, gameSystemKey, gameReview)) 
+            gameKey = review[0]
+            lowers = review[2]["review"].lower()
+            no_punctuation = lowers.translate(string.punctuation)
+            token_dict[gameKey] = no_punctuation
+                #print(getEntities(gameReview["review"]))
+    start = time.time()
+    cluster = cluster_textDB(token_dict)
+    print("%f" % (time.time() - start))
+    return cluster   
+
 def cluster_gamesOld(reviews):
     for gameSystemKey, systemDict in reviews.items():
         count = 0
@@ -106,12 +154,12 @@ def cluster_gamesOld(reviews):
                 no_punctuation = lowers.translate(string.punctuation)
                 token_dict[gameKey] = no_punctuation
                 #print(getEntities(gameReview["review"]))
-    cluster = cluster_text(token_dict)
+    cluster = dbscancluster_text(token_dict)
     return cluster 
 
 def mkm_cluster_text(docs, numClusters, gameName=None):
     """ Transform texts to coordinates using named entities and cluster texts using DBSCAN """
-    tfidf = TfidfVectorizer(tokenizer=tokenize, stop_words='english')
+    tfidf = HashingVectorizer(tokenizer=tokenize, stop_words='english')
     sortedValues = [token_dict[key] for key in sorted(token_dict.keys())]
     sortedLabels = [key for key in sorted(token_dict.keys())]
     model = tfidf.fit_transform(sortedValues)    
@@ -130,6 +178,45 @@ def mkm_cluster_text(docs, numClusters, gameName=None):
     else:
         return tfidf_cluster 
 
+def mkm_cluster_textEnt(docs, numClusters, gameName=None):
+    """ Transform texts to coordinates using named entities and cluster texts using DBSCAN """
+    vec = DictVectorizer()
+    #tfidf = HashingVectorizer(tokenizer=tokenize, stop_words='english')
+    docFeaturesLabeled = [(docName, getKwEntityFeatures(doc)) for docName, doc in docs.items()]
+    docFeatures = [item[1] for item in docFeaturesLabeled]
+    labels = [item[0] for item in docFeaturesLabeled]
+    model = vec.fit_transform(docFeatures) 
+    km = MiniBatchKMeans(n_clusters=numClusters, init='k-means++', n_init=1, init_size=1000, batch_size=1000).fit(model)
+ 
+    tfidf_cluster = collections.defaultdict(list)
+
+    for idx, label in enumerate(km.labels_):
+        tfidf_cluster[label].append(labels[idx]) 
+    
+    return tfidf_cluster  
+
+
+def dbscancluster_textTf(docs):
+    """ Transform texts to coordinates using named entities and cluster texts using DBSCAN """
+    
+    vec = DictVectorizer()
+    tfidf = TfidfVectorizer(tokenizer=tokenize, stop_words='english')
+    labels = [item[0] for item in docFeaturesLabeled]
+    model = tfidf.fit_transform(docFeatures).todense()
+    eps = .6 #radius
+    min_samples = 2 #number of samples in a cluster
+    
+    metric = distance.cosine
+    dbscan_model = DBSCAN(eps=eps, min_samples=min_samples, metric = metric).fit(model)
+ 
+    tfidf_cluster = collections.defaultdict(list)
+
+    for idx, label in enumerate(dbscan_model.labels_):
+        tfidf_cluster[label].append(labels[idx])
+
+    #plot(tfidf_model, dbscan_model, sortedLabels)
+    return tfidf_cluster 
+
 def dbscancluster_text(docs):
     """ Transform texts to coordinates using named entities and cluster texts using DBSCAN """
     
@@ -139,7 +226,7 @@ def dbscancluster_text(docs):
     docFeatures = [item[1] for item in docFeaturesLabeled]
     labels = [item[0] for item in docFeaturesLabeled]
     model = vec.fit_transform(docFeatures).todense()
-    eps = .7 #radius
+    eps = .6 #radius
     min_samples = 2 #number of samples in a cluster
     
     metric = distance.cosine
@@ -173,7 +260,7 @@ def knncluster_text(docs):
     #plot(tfidf_model, dbscan_model, sortedLabels)
     return tfidf_cluster 
 
-def cluster_text_Old(token_dict, entities):
+def cluster_textDB(token_dict):
     """ Transform texts to Tf-Idf coordinates and cluster texts using DBSCAN """
 
     #entities = [getEntities(doc) for docName, doc in 
@@ -181,7 +268,8 @@ def cluster_text_Old(token_dict, entities):
     sortedValues = [token_dict[key] for key in sorted(token_dict.keys())]
     sortedLabels = [key for key in sorted(token_dict.keys())]
     tfidf_model = tfidf.fit_transform(sortedValues).todense()
-    eps = .37 #radius
+    #eps = .37 #radius
+    eps = .1
     min_samples = 2 #number of samples in a cluster
     
     metric = distance.cosine
@@ -192,6 +280,7 @@ def cluster_text_Old(token_dict, entities):
     for idx, label in enumerate(dbscan_model.labels_):
         tfidf_cluster[label].append(sortedLabels[idx])
 
+    print(tfidf_cluster)
     #plot(tfidf_model, dbscan_model, sortedLabels)
     return tfidf_cluster 
 

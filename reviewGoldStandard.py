@@ -1,4 +1,6 @@
-goldStandard = ['AdvanceWars.txt','AdvanceWars2BlackHoleRising.txt'], \
+class GoldStandard:
+    def __init__(self):
+        self.goldStandard = ['AdvanceWars.txt','AdvanceWars2BlackHoleRising.txt'], \
 ['All-StarBaseball2003.txt','All-StarBaseball2004.txt', 'MLBSlugfest20-04.txt', 'MajorLeagueBaseball2K7.txt'], \
 ['BombermanMax2RedAdvance.txt','BombermanTournament.txt'], \
 ['BreathofFire.txt', 'BreathofFireII.txt'], \
@@ -97,11 +99,11 @@ goldStandard = ['AdvanceWars.txt','AdvanceWars2BlackHoleRising.txt'], \
 ['Yu-Gi-Oh!WorldChampionshipTournament2004.txt',
 'Yu-Gi-Oh!WorldwideEditionStairwaytotheDestinedDuel.txt']
 
-goldStandardList = []
-goldStandardMap = {}
-i = 0
-for category in goldStandard:
-    for game in category:
-        goldStandardList.append(game)
-        goldStandardMap[game] = i
-    i+=1
+        self.goldStandardList = []
+        self.goldStandardMap = {}
+        i = 0
+        for category in self.goldStandard:
+            for game in category:
+                self.goldStandardList.append(game)
+                self.goldStandardMap[game] = i
+            i+=1

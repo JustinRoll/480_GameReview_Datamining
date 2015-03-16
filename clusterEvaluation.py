@@ -1,32 +1,35 @@
-import clusterGames
-import reviewGoldStandard
+from clusterGames import *
+from  reviewGoldStandard import *
 import pickle
+from copy import deepcopy
 #load all reviews from the gold standard
 #   check if there are reviews from the gold standard that didn't get parsed correctly; discard those
 #   update gold standard
 #cluster the reviews
 
 #evaluate purity
-def getGoldStandardReviews():
+def getGoldStandardReviews(gs):
     reviews = pickle.load(open("data/gameReviewDict.p", "rb"))
     reviewsList = []
-    cutoff = 1000
-    goodReviews = 0
-    badReviews = 0
     for gameSystemKey, systemDict in reviews.items():
-        if badReviews > cutoff and goodReviews > cutoff:
-            break
         for gameKey, gameReview in systemDict.items():
-            if badReviews > cutoff and goodReviews > cutoff:
-                break
-            if "review" in gameReview and "scores" in gameReview and "gamespot score" in gameReview["scores"]:
-                if gameReview["scores"]["gamespot score"] < 6 and badReviews <= cutoff:
-                    reviewsList.append((gameKey, gameSystemKey, gameReview))
-                    badReviews += 1
-                if gameReview["scores"]["gamespot score"] >= 6 and goodReviews <= cutoff:
-                    reviewsList.append((gameKey, gameSystemKey, gameReview))
-                    goodReviews += 1 
-    print(badReviews)
-    print(goodReviews)
+            if "review" in gameReview and "scores" in gameReview and "gamespot score" in gameReview["scores"] and gameKey in gs.goldStandardList:
+                reviewsList.append((gameKey, gameSystemKey, gameReview))
     return reviewsList 
 
+def updateGoldStandard(gs):
+    gsTempMap = deepcopy(gs.goldStandardMap)
+    for key in gsTempMap.keys():
+        if key not in gs.goldStandardList:
+            del gs.goldStandardMap[key]
+
+
+def main():
+    gs = GoldStandard()
+    revs = getGoldStandardReviews(gs)
+    gs.goldStandardList = [rev[0] for rev in revs]
+    updateGoldStandard(gs)
+    clusters = cluster_gamesGSkb(revs, gs)
+    print(calculate_purity(clusters, gs))
+
+main()
