@@ -8,6 +8,7 @@ def main():
     fText = '\n'.join(f.readlines())
     f.close()
     
-    print(getGameCluster(reviews, sys.argv[1], fText))
+    gameName = sys.argv[1]
+    print(getGameCluster(reviews, gameName, fText))
    
 main()

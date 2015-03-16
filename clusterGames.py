@@ -61,7 +61,7 @@ def getGameCluster(reviews, gameName, gameText):
     numReviews = 800
     revDict = listn_reviews(reviews, numReviews)
     revDict[gameName] = gameText.lower().translate(string.punctuation)
-    cluster = mkm_cluster_text(token_dict, int(numReviews/8), gameName=gameName)
+    cluster = mkm_cluster_text(token_dict, 60, gameName=gameName)
     return cluster
 
 def listn_reviews(reviews, n=100):
