@@ -62,18 +62,23 @@ def getGameCluster(reviews, gameName, gameText):
     numReviews = 800
     revDict = listn_reviews(reviews, numReviews)
     revDict[gameName] = gameText.lower().translate(string.punctuation)
-    cluster = mkm_cluster_text(token_dict, 60, gameName=gameName)
+    cluster = mkm_cluster_text(token_dict, 90, gameName=gameName)
     
     return cluster
 
 def listn_reviews(reviews, n=100):
     count = 0
-    for gameSystemKey, systemDict in reviews.items():
+    orderedSystems = sorted([gameSystemKey for gameSystemKey in reviews.keys()])
+    for gameSystemKey in orderedSystems:
+        systemDict = reviews[gameSystemKey]
         if count > n:
             break
-        for gameKey, gameReview in systemDict.items():
+        orderedKeys = sorted([gameKey for gameKey in systemDict.keys()])
+        for gameKey in orderedKeys:
+            gameReview = systemDict[gameKey]
             if count > n:#just to reduce sample size
                 break
+
             if "review" in gameReview and "scores" in gameReview and "gamespot score" in gameReview["scores"]:
                 lowers = gameReview["review"].lower()
                 no_punctuation = lowers.translate(string.punctuation)
@@ -172,7 +177,7 @@ def mkm_cluster_text(docs, numClusters, gameName=None):
         tfidf_cluster[label].append(sortedLabels[idx])
         if gameName != None and sortedLabels[idx] == gameName:
             inpCluster = label    
-    
+    print(tfidf_cluster)    
     if gameName != None and inpCluster != -1:
         return tfidf_cluster[inpCluster]
     else:

@@ -7,4 +7,3 @@ def clusterTestGame(fText):
     gameName = "Test Game Title.txt"
 
     return getGameCluster(reviews, gameName, fText)
-   

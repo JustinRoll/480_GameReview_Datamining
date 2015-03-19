@@ -10,25 +10,49 @@ def Cluster():
    game = textBox.get("1.0",END)
    if len(game) > 1:
       clusterResult = list(clusterTestGame(game))
+      if len(clusterResult) < 2: #rerun kmeans if we don't get results for the game
+        clusterResult = list(clusterTestGame(game))
+      if len(clusterResult) < 2:
+        clusterResult = list(clusterTestGame(game))      
+      if len(clusterResult) < 2:
+        clusterResult = list(clusterTestGame(game))       
+      if len(clusterResult) < 2:
+        clusterResult = list(clusterTestGame(game))        
+
       resultStr = ""
-      if "Test Game Title" in clusterResult:
-        clusterResult.remove("Test Game Title")
+      if "Test Game Title.txt" in clusterResult:
+        clusterResult.remove("Test Game Title.txt")
       for item in clusterResult:
         resultStr += item[:-4] + ", "
-      
-      messagebox.showinfo(title="Cluster Results", message=resultStr[:-2])
+      if len(clusterResult) > 0:
+          message = resultStr[:-2]
+      else:
+          message = "Related games not found"      
+      messagebox.showinfo(title="Cluster Results", message=message)
 
 def ClusterFile():
     game = textBox2.get("1.0",END)
     if len(game) > 1:
-      clusterResult = list(clusterTestGame(game))
+      clusterResult = list(clusterTestGame(game)) #rerun kmeans if we don't get results
+      if len(clusterResult) < 2:
+        clusterResult = list(clusterTestGame(game))
+      if len(clusterResult) < 2:
+        clusterResult = list(clusterTestGame(game))      
+      if len(clusterResult) < 2:
+        clusterResult = list(clusterTestGame(game))       
+      if len(clusterResult) < 2:
+        clusterResult = list(clusterTestGame(game))       
+ 
       resultStr = ""
-      if "Test Game Title" in clusterResult:
-        clusterResult.remove("Test Game Title")
+      if "Test Game Title.txt" in clusterResult:
+        clusterResult.remove("Test Game Title.txt")
       for item in clusterResult:
         resultStr += item[:-4] + ", "
-      
-      messagebox.showinfo(title="Cluster Results", message=resultStr[:-2])
+      if len(clusterResult) > 0:
+          message = resultStr[:-2]
+      else:
+          message = "Related games not found"
+      messagebox.showinfo(title="Cluster Results", message=message)
 
 def Analyze():
    game = textBox.get("1.0",END)
@@ -50,7 +74,7 @@ def AnalyzeEntitiesRaw():
       makeChart(getEntities(game))
 
 def AnalyzeFile():
-   name = filedialog.askopenfilename(title = "Select a video game review", initialdir="/Users/jroll/dev/480/480_GameReview_Datamining/sampleReviews",filetypes=(("text files","*.txt"),("all files","*.*")))
+   name = filedialog.askopenfilename(title = "Select a video game review", initialdir="sampleReviews",filetypes=(("text files","*.txt"),("all files","*.*")))
    rating = classifyGameReviewFile(name)
 
    textBox2.delete("1.0",END)
