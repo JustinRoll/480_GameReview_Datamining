@@ -2,8 +2,11 @@ Our code has the following dependencies:
 Python 3.4
 NLTK 3
 Scikit-Learn http://scikit-learn.org/stable/install.html#install-by-distribution
+
 AlchemyAPI for python http://www.alchemyapi.com/developers/getting-started-guide/using-alchemyapi-with-python
+
 MatPlotLib for python http://matplotlib.org/
+
 The DePaul University Researchers' GameSpot Corpus https://www.dropbox.com/s/0sxz6yk4sh89il6/games.zip?dl=0
 
 This project performs real-time sentiment classification of video game reviews, as well as clustering of video game reviews into related groups. Our corpus was provided to us by Kevin Raison, Noriko Tomuro, and Steve Lytinen. You can find their work at www.academia.edu/download/30186920/japtal2012.pdf.
