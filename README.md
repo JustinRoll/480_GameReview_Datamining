@@ -21,6 +21,13 @@ python3 reviewDriver.py. Once this finishes, you will now have a reviewclassifie
 
 You will now be able to run the gui by typing pythone gui.py into the terminal.
 
-The clusterer can be run manually by typing python3 clusterEvaluation.py
-The default is to run and evaluate it with KMeans. You can run and evaluate it with dbscan by typing 
-python3 clusterEvaluation.py dbscan.
+The clusterer can be run manually by typing one of the below commands into the shell: 
+
+python3 clusterEvaluation.py kmeans tfidf
+python3 clusterEvaluation.py kmeans wc
+python3 clusterEvaluation.py kmeans entity
+python3 clusterEvaluation.py dbscan tfidf
+python3 clusterEvaluation.py dbscan wc
+python3 clusterEvaluation.py dbscan entity
+
+The first parameter is the type of clustering algorithm, while the second parameter is the type of features to use.
